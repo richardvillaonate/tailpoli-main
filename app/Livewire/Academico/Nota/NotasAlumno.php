@@ -9,81 +9,85 @@ use Livewire\Component;
 class NotasAlumno extends Component
 {
     public $notas;
-    public $notaenv;
-    public $porcenv;
     public $actual;
-    public $calificacion;
 
+    // guardaremos notas por alumno y número de nota
+    public $calificaciones = [];
 
-    public function mount($notaenv = null, $porcenv = null, $actual = null){
-
-        $this->notaenv=$notaenv;
-        $this->porcenv=$porcenv;
-        $this->actual=$actual;
+    public function mount($actual = null)
+    {
+        $this->actual = $actual;
 
         $this->registroNotas();
     }
 
-    public function registroNotas(){
-
-        $this->notas=DB::table('notas_detalle')
-                        ->where('nota_id', $this->actual->id)
-                        ->orderBy('alumno')
-                        ->get();
+    public function registroNotas()
+    {
+        $this->notas = DB::table('notas_detalle')
+            ->where('nota_id', $this->actual->id)
+            ->orderBy('alumno')
+            ->get();
     }
 
-    public function subir($id){
-        if($this->calificacion===null){
-            $this->dispatch('alerta', name:'Debe registrar nota.');
-        }else{
-            if($this->calificacion<=5 && $this->calificacion>=0){
-                    
-                $item=DB::table('notas_detalle')
-                            ->where('id', $id)
-                            ->first();
+    public function subir($id, $numero)
+    {
+        $notaCampo = "nota" . $numero;
+        $porcenCampo = "porcen" . $numero;
 
-                    $porcenta=$this->porcenv;
-                    $porce=(floatval($this->calificacion)*$this->actual->$porcenta)/100;
-                    $porcentaje=round($porce, 2);
-                    $concepto=$this->notaenv;
-                    $observaciones=now()." ".Auth::user()->name." cargo la nota de: ".$this->actual->$concepto." --- ".$item->observaciones;
+        $nota = $this->calificaciones[$id][$numero] ?? null;
 
-                    DB::table('notas_detalle')
-                            ->where('id', $id)
-                            ->update([
-                                $concepto       =>$this->calificacion,
-                                $porcenta       =>$porcentaje,
-                                'observaciones' =>$observaciones,
-                            ]);
-
-                    $this->registroNotas();
-                    $this->dispatch('refresh');
-                    $this->reset('calificacion');
-
-                    $this->promedio($id);
-            }else{
-                $this->dispatch('alerta', name:'La calificación debe estar entre 0 y 5');
-            }
+        if ($nota === null) {
+            $this->dispatch('alerta', name: 'Debe registrar nota.');
+            return;
         }
+
+        if ($nota < 0 || $nota > 5) {
+            $this->dispatch('alerta', name: 'La calificación debe estar entre 0 y 5');
+            return;
+        }
+
+        $item = DB::table('notas_detalle')
+            ->where('id', $id)
+            ->first();
+
+        $porcentajeActividad = $this->actual->$porcenCampo ?? 0;
+
+        $porcentaje = round(($nota * $porcentajeActividad) / 100, 2);
+
+        $observaciones = now() . " " . Auth::user()->name .
+            " cargó nota {$numero}: {$nota} --- " . ($item->observaciones ?? '');
+
+        DB::table('notas_detalle')
+            ->where('id', $id)
+            ->update([
+                $notaCampo => $nota,
+                $porcenCampo => $porcentaje,
+                'observaciones' => $observaciones,
+            ]);
+
+        $this->promedio($id);
+
+        $this->registroNotas();
     }
 
-    public function promedio($id){
-        $total=0;
-        for ($i=1; $i <= $this->actual->registros; $i++) {
-            $porcen="porcen".$i;
-            $item=DB::table('notas_detalle')
-                    ->where('id', $id)
-                    ->select($porcen)
-                    ->first();
+    public function promedio($id)
+    {
+        $item = DB::table('notas_detalle')
+            ->where('id', $id)
+            ->first();
 
-            $total=$total+$item->$porcen;
+        $total = 0;
+
+        for ($i = 1; $i <= 4; $i++) {
+            $campo = "porcen" . $i;
+            $total += $item->$campo ?? 0;
         }
 
         DB::table('notas_detalle')
-                    ->where('id', $id)
-                    ->update([
-                        'acumulado'=>$total
-                    ]);
+            ->where('id', $id)
+            ->update([
+                'acumulado' => $total
+            ]);
     }
 
     public function render()

@@ -131,6 +131,7 @@ class Notas extends Component
 
     private function notas()
     {
+        
         return Nota::buscar($this->buscamin)
                         ->profesor(intval($this->filtroprofesor))
                         ->jornada(intval($this->filtrojornada))
