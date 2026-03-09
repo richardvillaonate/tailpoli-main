@@ -158,15 +158,41 @@ class Grupos extends Component
         return new AcaGrupoExport($this->buscamin);
     }
 
-    private function grupos()
-    {
-        return Grupo::buscar($this->buscamin)
-                        ->curso($this->idsModulo)
-                        ->jornada($this->filtrojornada)
-                        ->orderBy($this->ordena, $this->ordenado)
-                        ->paginate($this->pages);
+    // private function grupos()
+    // {
+    //     return Grupo::buscar($this->buscamin)
+    //                     ->curso($this->idsModulo)
+    //                     ->jornada($this->filtrojornada)
+    //                     ->orderBy($this->ordena, $this->ordenado)
+    //                     ->paginate($this->pages);
 
-    }
+    // }
+    private function grupos(){
+    return Grupo::where('grupos.inscritos','>',0)
+                    ->where('grupos.status',true)
+                    ->sede($this->filtroSede)
+                    ->curso($this->filtrocursogrupo)
+
+                    ->join('ciclogrupos','ciclogrupos.grupo_id','=','grupos.id')
+
+                    ->selectRaw('
+                        MIN(grupos.id) as id,
+                        MIN(grupos.name) as name,
+                        grupos.modulo_id,
+                        ciclogrupos.ciclo_id,
+                        MIN(grupos.jornada) as jornada
+                    ')
+
+                    ->groupBy(
+                        'ciclogrupos.ciclo_id',
+                        'grupos.modulo_id'
+                    )
+
+                    ->orderBy('jornada','ASC')
+                    ->orderBy('name','ASC')
+
+                    ->get();
+}
 
     public function render()
     {

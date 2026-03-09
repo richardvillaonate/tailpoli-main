@@ -424,16 +424,113 @@ class Gestiones extends Component
                     ->get();
     }
 
-    private function grupos(){
-        return Grupo::where('inscritos','>',0)
-                        ->where('status',true)
-                        ->sede($this->filtroSede)
-                        ->curso($this->filtrocursogrupo)
-                        ->select('id','name')
-                        ->orderBy('jornada','ASC')
-                        ->orderBy('name','ASC')
-                        ->get();
-    }
+  private function grupos(){
+    return Grupo::where('inscritos','>',0)
+                    ->where('status',true)
+                    ->sede($this->filtroSede)
+                    ->curso($this->filtrocursogrupo)
+
+                    ->selectRaw('
+                        MIN(id) as id,
+                        MIN(name) as name,
+                        ciclo_id,
+                        MIN(jornada) as jornada
+                    ')
+
+                    ->groupBy('ciclo_id')
+
+                    ->orderBy('jornada','ASC')
+                    ->orderBy('name','ASC')
+
+                    ->get();
+}
+
+    // private function grupos(){
+    //     return Grupo::where('inscritos','>',0)
+    //                     ->where('status',true)
+    //                     ->sede($this->filtroSede)
+    //                     ->curso($this->filtrocursogrupo)
+    //                     ->select('id','name')
+    //                     ->orderBy('jornada','ASC')
+    //                     ->orderBy('name','ASC')
+    //                     ->get();
+    // }
+
+
+    
+
+
+//  private function grupos()
+// {
+//     return Grupo::join('modulos', 'modulos.id', '=', 'grupos.modulo_id')
+//                 ->join('cursos', 'cursos.id', '=', 'modulos.curso_id')
+//                 ->where('grupos.inscritos', '>', 0)
+//                 ->where('grupos.status', 1)
+//                 ->where('grupos.sede_id', $this->filtroSede)
+//                 ->select(
+//                     'cursos.id as curso_id',
+//                     'cursos.name as curso',
+//                     'grupos.jornada'
+//                 )
+//                 ->groupBy(
+//                     'cursos.id',
+//                     'cursos.name',
+//                     'grupos.jornada'
+//                 )
+//                 ->orderBy('cursos.name','ASC')
+//                 ->orderBy('grupos.jornada','ASC')
+//                 ->get();
+// }
+
+// private function grupos()
+// {
+//     return Grupo::join('modulos', 'modulos.id', '=', 'grupos.modulo_id')
+//                 ->join('cursos', 'cursos.id', '=', 'modulos.curso_id')
+//                 ->where('grupos.inscritos', '>', 0)
+//                 ->where('grupos.status', 1)
+//                 ->where('grupos.sede_id', $this->filtroSede)
+//                 ->whereIn('grupos.modulo_id', $this->filtrocursogrupo)
+//                 ->select(
+//                     'grupos.id',
+//                     'grupos.name',
+//                     'cursos.name as curso',
+//                     'grupos.jornada'
+//                 )
+//                 ->orderBy('cursos.name','ASC')
+//                 ->orderBy('grupos.jornada','ASC')
+//                 ->orderBy('grupos.name','ASC')
+//                 ->get();
+// }
+
+
+// private function grupos()
+// {
+//     return Grupo::join('cursos', 'cursos.id', '=', 'grupos.curso_id')
+
+//                 ->where('grupos.inscritos', '>', 0)
+//                 ->where('grupos.status', 1)
+//                 ->where('grupos.sede_id', $this->filtroSede)
+
+//                 ->select(
+//                     'grupos.ciclo_id',
+//                     'cursos.id as curso_id',
+//                     'cursos.name as curso',
+//                     'grupos.jornada'
+//                 )
+
+//                 ->groupBy(
+//                     'grupos.ciclo_id',
+//                     'cursos.id',
+//                     'cursos.name',
+//                     'grupos.jornada'
+//                 )
+
+//                 ->orderBy('grupos.ciclo_id','DESC')
+//                 ->orderBy('cursos.name','ASC')
+//                 ->orderBy('grupos.jornada','ASC')
+
+//                 ->get();
+// }
 
     public function render()
     {
