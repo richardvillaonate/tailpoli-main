@@ -71,6 +71,8 @@ class NotasAlumno extends Component
     $this->promedio($id);
 
     $this->registroNotas();
+
+    $this->dispatch('alerta', name: "Nota {$numero} guardada correctamente ✔");
 }
 
 
