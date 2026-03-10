@@ -105,18 +105,17 @@
                                 @endcan
                             @endif
 
-                            @foreach ($encabezado as $item)
-                                <th scope="col" class="px-6 py-3" >
-                                    {{$actual->$item}}
-                                </th>
-                            @endforeach
+                           
                             <th scope="col" class="px-6 py-3" >
                                 Observaciones
                             </th>
                         </tr>
                     </thead>
                     <tbody>
+                        <p>Total de notas: {{ $notas->count() }}</p>
                         @foreach ($notas as $nota)
+
+                        
                             <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-green-200">
                                 <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                                     {{$nota->alumno}}
@@ -129,7 +128,6 @@
                                         @switch($nota->aprobo)
                                             @case(0)
                                                 @if ($nota->acumulado)
-
                                                         @hasrole('Profesor')
                                                             @if ($actual->profesor_id===Auth::user()->id)
                                                                 <th scope="row" class="px-6 py-4 rounded-s-sm font-medium hover:bg-orange-200 text-gray-900 whitespace-nowrap dark:text-white" style="cursor: pointer;"
@@ -169,11 +167,7 @@
                                     @endcan
                                 @endif
 
-                                @foreach ($encabezado as $item)
-                                    <th scope="col" class="px-6 py-3" >
-                                        {{$nota->$item}}
-                                    </th>
-                                @endforeach
+                               
                                 <th scope="row" class="px-6 py-4 font-medium text-gray-900 dark:text-white">
                                     {{$nota->observaciones}}
                                 </th>
