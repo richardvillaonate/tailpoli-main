@@ -119,5 +119,17 @@ class Control extends Model
             $query->where('ultima_asistencia', $deser);
         });
     }
+
+
+    public function scopeGrupo($query, $grupo)
+{
+    $query->when($grupo ?? null, function($query, $grupo){
+        $query->whereHas('ciclo', function($query) use ($grupo){
+            $query->whereHas('ciclogrupos', function($query) use ($grupo){
+                $query->where('grupo_id', intval($grupo));
+            });
+        });
+    });
+}
 }
 

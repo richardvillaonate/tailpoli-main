@@ -331,7 +331,8 @@ class Gestiones extends Component
                                         $this->estado_estudiante,
                                         $this->filtrociclo,
                                         $this->filtroprofesor,
-                                        $this->filtrodeser
+                                        $this->filtrodeser,
+                                        $this->filtrogrupo,
                                     );
     }
 

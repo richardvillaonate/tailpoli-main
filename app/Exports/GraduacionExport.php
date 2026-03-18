@@ -34,6 +34,7 @@ class GraduacionExport implements FromCollection, WithCustomStartCell, Responsab
     private $filtrodeser;
     private $fileName = "Graduaciones.xlsx";
     private $writerType = \Maatwebsite\Excel\Excel::XLSX;
+    private $filtrogrupo;
 
     public function __construct(
                                     $buscamin,
@@ -45,6 +46,7 @@ class GraduacionExport implements FromCollection, WithCustomStartCell, Responsab
                                     $filtrociclo,
                                     $filtroprofesor,
                                     $filtrodeser,
+                                    $filtrogrupo,
                                 )
     {
         $this->buscamin=$buscamin;
@@ -56,6 +58,7 @@ class GraduacionExport implements FromCollection, WithCustomStartCell, Responsab
         $this->filtrociclo=$filtrociclo;
         $this->filtroprofesor=$filtroprofesor;
         $this->filtrodeser=$filtrodeser;
+        $this->filtrogrupo=$filtrogrupo;
 
         $estados=Estado::orderBy('id','ASC')->get();
 
@@ -67,22 +70,41 @@ class GraduacionExport implements FromCollection, WithCustomStartCell, Responsab
     /**
     * @return \Illuminate\Support\Collection
     */
+    // public function collection()
+    // {
+    //     return Control::whereNotIn('status_est',[11])
+    //                     ->selectRaw('controls.*, DATEDIFF(CURDATE(), ultima_asistencia) as dias_pasados')
+    //                     ->buscar($this->buscamin)
+    //                     ->desert($this->filtrodeser)
+    //                     ->sede($this->filtroSede)
+    //                     ->curso($this->filtrocurso)
+    //                     ->inicia($this->filtroinicia)
+    //                     ->grado($this->filtrogrado)
+    //                     ->status($this->estado_estudiante)
+    //                     ->ciclo($this->filtrociclo)
+    //                     ->profesor($this->filtroprofesor)
+    //                     ->orderBy('fecha_grado', 'DESC')
+    //                     ->get();
+    // }
     public function collection()
-    {
-        return Control::whereNotIn('status_est',[11])
-                        ->selectRaw('controls.*, DATEDIFF(CURDATE(), ultima_asistencia) as dias_pasados')
-                        ->buscar($this->buscamin)
-                        ->desert($this->filtrodeser)
-                        ->sede($this->filtroSede)
-                        ->curso($this->filtrocurso)
-                        ->inicia($this->filtroinicia)
-                        ->grado($this->filtrogrado)
-                        ->status($this->estado_estudiante)
-                        ->ciclo($this->filtrociclo)
-                        ->profesor($this->filtroprofesor)
-                        ->orderBy('fecha_grado', 'DESC')
-                        ->get();
-    }
+{
+    return Control::whereNotIn('status_est',[11])
+        ->selectRaw('controls.*, DATEDIFF(CURDATE(), ultima_asistencia) as dias_pasados')
+        ->with(['estudiante.perfil', 'matricula', 'ciclo']) // 🔥 evita N+1
+        ->buscar($this->buscamin)
+        ->desert($this->filtrodeser)
+        ->sede($this->filtroSede)
+        ->curso($this->filtrocurso)
+        ->inicia($this->filtroinicia)
+        ->grado($this->filtrogrado)
+        ->status($this->estado_estudiante)
+        ->ciclo($this->filtrociclo)
+        ->profesor($this->filtroprofesor)
+        ->grupo($this->filtrogrupo) // 🔥 ESTE ES EL QUE TE FALTABA
+        ->orderBy('fecha_grado', 'DESC')
+        ->get();
+}
+
 
     public function startCell(): string
     {

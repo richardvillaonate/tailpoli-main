@@ -1,0 +1,9 @@
+app/Livewire/Academico/Gestion/Gestiones.php
+app/Livewire/Academico/Grupo/Grupos.php
+app/Livewire/Academico/Nota/Notas.php
+app/Livewire/Academico/Nota/NotasAlumno.php
+database/migrations/2026_03_01_091728_add_ciclo_id_to_grupos_table.php
+resources/views/includes/filtro.blade.php
+resources/views/livewire/academico/nota/notas-alumno.blade.php
+resources/views/livewire/academico/nota/notas-aprobar.blade.php
+resources/views/livewire/academico/nota/notas-editar.blade.php
