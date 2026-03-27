@@ -294,5 +294,18 @@
 
 {{--     <div class="{{$recibostate ? 'bg-orange-100': ''}} p-2"> --}}
 
+<!-- <pre>
+CARTERA COUNT: {{ $carteras->count() }}
+
+TOTAL CARTERA VALOR: {{ $carteras->sum('valor') }}
+
+TOTAL PAGADO (según cartera):
+{{ $carteras->sum(fn($c) => $c->valor - $c->descuento - $c->saldo) }}
+
+RECIBOS COUNT: {{ $recibos->count() ?? 0 }}
+
+TOTAL RECIBOS:
+{{ $recibos->sum('valor_total') ?? 0 }}
+</pre> -->
 
 </div>

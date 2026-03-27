@@ -281,6 +281,8 @@ class Matriculas extends Component
         $this->estado();
     }
 
+    
+
     /* public function estado(){
         $est=Estado::select('id')->orderBy('id','ASC')->get();
 

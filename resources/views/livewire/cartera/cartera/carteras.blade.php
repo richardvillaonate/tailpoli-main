@@ -23,6 +23,13 @@
                     </span>
                 @endforeach
             </h2>
+
+            <div>
+                            <!-- {{-- DEBUG TEMPORAL --}} -->
+            <pre>
+                <!-- {{ print_r($carteras->toArray(), true) }} -->
+            </pre>
+            </div>
             <table class=" text-sm text-left text-gray-500 dark:text-gray-400">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                     <tr>
@@ -31,6 +38,21 @@
                         </th>
                         <th scope="col" class="px-6 py-3" >
                             Estudiante
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            Método de pago
+                        </th>
+
+                        <th scope="col" class="px-6 py-3">
+                            Cuotas
+                        </th>
+
+                        <th scope="col" class="px-6 py-3">
+                            Fecha
+                        </th>
+
+                        <th scope="col" class="px-6 py-3">
+                            Mora
                         </th>
                         <th scope="col" class="px-6 py-3" style="cursor: pointer;" wire:click="organizar('saldo')">
                             Saldo
@@ -80,6 +102,49 @@
                             </th>
                             <th scope="row" class="px-6 py-4 font-medium text-gray-900  dark:text-white capitalize">
                                 {{$cartera->responsable->documento}} - {{$cartera->responsable->name}} - {{$cartera->matricula->curso->name}}
+                            </th>
+                            <th scope="row" class="px-6 py-4 font-medium text-gray-900  dark:text-white capitalize">
+                                <!-- {{ $this->metodoPago($cartera->matricula_id) }}<td class="text-center"> -->
+                                @php
+                                    $metodo = $this->metodoPago($cartera->matricula_id);
+                                @endphp
+
+                                @if($metodo)
+                                    <span class="px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-800">
+                                        {{ $metodo }}
+                                    </span>
+                                @else
+                                    <span class="px-2 py-1 text-xs font-semibold rounded bg-red-100 text-red-800">
+                                        Sin definir
+                                    </span>
+                                @endif
+                            </td>
+
+                           @php
+                                $cuotas = $this->cuotasPendientes($cartera->matricula_id);
+                            @endphp
+
+                            <!-- CUOTAS -->
+                            <th class="text-center font-bold">
+                                {{ $cuotas['cantidad_vencidas'] }}
+                            </td>
+
+                            <!-- FECHA -->
+                            <th class="text-center">
+                               {{ $cuotas['fecha_vencida'] ?? $cuotas['proximo_pago'] ?? '-' }}
+                            </td>
+
+                            <!-- MORA -->
+                            <th class="text-center">
+                              @if($cuotas['dias_mora'] > 0)
+                                    <span class="text-red-600 font-bold">
+                                        {{ $cuotas['dias_mora'] }} días
+                                    </span>
+                                @else
+                                    <span class="text-green-600">
+                                        Al día
+                                    </span>
+                                @endif
                             </th>
                             <th scope="row" class="px-6 py-4 font-medium text-gray-900  text-right dark:text-white capitalize">
                                 $ {{number_format($cartera->saldo, 0, ',', '.')}}

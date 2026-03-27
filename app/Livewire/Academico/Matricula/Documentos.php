@@ -163,9 +163,9 @@ class Documentos extends Component
         $this->carnet($this->matricula->id);
 
         //Enviar email
-        $this->claseEmail(2,$this->matricula->id);
+        // $this->claseEmail(2,$this->matricula->id);
 
-        $this->dispatch('alerta', name:'Se ha enviado el carnet al correo: '.$this->matricula->alumno->email);
+        // $this->dispatch('alerta', name:'Se ha enviado el carnet al correo: '.$this->matricula->alumno->email);
     }
 
     public function render()

@@ -121,4 +121,9 @@ class Grupo extends Model
         });
     }
 
+    public function control()
+{
+    return $this->belongsTo(\App\Models\Academico\Control::class);
+}
+
 }

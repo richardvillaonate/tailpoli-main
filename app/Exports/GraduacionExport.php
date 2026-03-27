@@ -70,27 +70,16 @@ class GraduacionExport implements FromCollection, WithCustomStartCell, Responsab
     /**
     * @return \Illuminate\Support\Collection
     */
-    // public function collection()
-    // {
-    //     return Control::whereNotIn('status_est',[11])
-    //                     ->selectRaw('controls.*, DATEDIFF(CURDATE(), ultima_asistencia) as dias_pasados')
-    //                     ->buscar($this->buscamin)
-    //                     ->desert($this->filtrodeser)
-    //                     ->sede($this->filtroSede)
-    //                     ->curso($this->filtrocurso)
-    //                     ->inicia($this->filtroinicia)
-    //                     ->grado($this->filtrogrado)
-    //                     ->status($this->estado_estudiante)
-    //                     ->ciclo($this->filtrociclo)
-    //                     ->profesor($this->filtroprofesor)
-    //                     ->orderBy('fecha_grado', 'DESC')
-    //                     ->get();
-    // }
+    
     public function collection()
 {
     return Control::whereNotIn('status_est',[11])
         ->selectRaw('controls.*, DATEDIFF(CURDATE(), ultima_asistencia) as dias_pasados')
-        ->with(['estudiante.perfil', 'matricula', 'ciclo']) // 🔥 evita N+1
+       ->with([
+            'estudiante.perfil',
+            'matricula.carteras', 
+            'ciclo'
+        ])
         ->buscar($this->buscamin)
         ->desert($this->filtrodeser)
         ->sede($this->filtroSede)
@@ -125,6 +114,7 @@ class GraduacionExport implements FromCollection, WithCustomStartCell, Responsab
             'Fecha Grado',
             'Programación',
             'Último Pago',
+            'Próximo Pago',
             'Última Asistencia',
             'Días desde última asistencia',
             'Mora',
@@ -145,6 +135,27 @@ class GraduacionExport implements FromCollection, WithCustomStartCell, Responsab
             $celular=$graduacion->estudiante->perfil->celular;
         }
 
+
+                $hoy = now();
+
+        $carteras = collect();
+
+        // validar que exista matricula
+        if ($graduacion->matricula && $graduacion->matricula->carteras) {
+            $carteras = $graduacion->matricula->carteras
+                ->where('estado_cartera_id', '<', 5)
+                ->sortBy('fecha_pago');
+        }
+
+        // próxima cuota (no vencida)
+        $proxima = $carteras
+            ->filter(function ($item) use ($hoy) {
+                return $item->fecha_pago >= $hoy;
+            })
+            ->first();
+
+        $proximaFecha = optional($proxima)->fecha_pago;
+
         return [
             $graduacion->estudiante->name,
             $graduacion->estudiante->documento,
@@ -157,6 +168,7 @@ class GraduacionExport implements FromCollection, WithCustomStartCell, Responsab
             $graduacion->fecha_grado,
             $graduacion->ciclo->name,
             $graduacion->ultimo_pago,
+            $proximaFecha,
             $graduacion->ultima_asistencia,
             $graduacion->dias_pasados,
             $graduacion->mora,
@@ -176,6 +188,8 @@ class GraduacionExport implements FromCollection, WithCustomStartCell, Responsab
             'H' => 'dd/mm/yyyy',
             'j' => 'dd/mm/yyyy',
             'K' => 'dd/mm/yyyy',
+            'L' => 'dd/mm/yyyy',
+            'M' => 'dd/mm/yyyy',
         ];
     }
 

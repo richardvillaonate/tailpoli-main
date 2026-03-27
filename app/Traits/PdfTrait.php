@@ -24,7 +24,39 @@ trait PdfTrait
     public $id;
     public $accion;
 
+
     public function carnet($id){
+
+    $matricula = Matricula::find($id);
+
+    if(!$matricula){
+        dd('No existe matrícula');
+    }
+
+    $nombre = $matricula->alumno->documento."_carnet.pdf";
+
+    return Pdf::loadView('pdfs.carnet', compact('matricula','id'))
+                ->setPaper([0,0,300,200]) 
+                ->download($nombre); // 🔥 descarga automática
+}
+
+
+
+    public function carnet3($id){
+
+    $matricula = Matricula::find($id);
+
+    if(!$matricula){
+        dd('No existe matrícula');
+    }
+
+    $nombre = $matricula->alumno->documento."_carnet.pdf";
+
+    return Pdf::loadView('pdfs.carnet', compact('matricula','id'))
+                ->download($nombre); // 🔥 descarga directa
+}
+
+    public function carnet2($id){
 
         $matricula=Matricula::find($id);
         $id=$id;

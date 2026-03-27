@@ -174,4 +174,15 @@ class Matricula extends Model
         });
     }
 
+    public function configPago()
+{
+    return $this->belongsTo(\App\Models\Financiera\ConfiguracionPago::class, 'configpago');
+}
+
+
+    public function carteras()
+{
+    return $this->hasMany(\App\Models\Financiera\Cartera::class, 'matricula_id');
+}
+
 }

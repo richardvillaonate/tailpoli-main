@@ -49,3 +49,8 @@ Route::get('/gradua', function () {
 Route::get('/planes', function () {
     return view('academico.planes.index');
 })->middleware('can:ac_planeacion')->name('planes');
+
+
+Route::get('/asistencia', function () {
+    return view('academico.gestion.index');
+})->middleware('can:ac_gestion')->name('gestion');

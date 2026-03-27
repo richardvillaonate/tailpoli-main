@@ -1,5 +1,141 @@
 <!DOCTYPE html>
 <html lang="es">
+<head>
+<meta charset="utf-8">
+
+<style>
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    /* 🔥 TAMAÑO REAL TIPO CARNET */
+    .carnet {
+        width: 350px;
+        height: 220px;
+        border: 2px solid #000;
+        padding: 5px;
+    }
+
+    .header img {
+        width: 100%;
+        height: auto;
+    }
+
+    .contenido {
+        margin-top: 5px;
+        font-size: 11px;
+    }
+
+    .fila {
+        display: table;
+        width: 100%;
+        margin-bottom: 3px;
+    }
+
+    .label {
+        display: table-cell;
+        width: 40%;
+        font-weight: bold;
+    }
+
+    .value {
+        display: table-cell;
+        width: 60%;
+        text-transform: uppercase;
+        font-weight: bold;
+    }
+
+    .curso {
+        font-size: 10px;
+    }
+
+    .footer {
+        width: 350px;
+        height: 180px;
+        border: 2px solid #000;
+        margin-top: 10px;
+        padding: 5px;
+        text-align: center;
+        font-size: 10px;
+    }
+
+    .firma img {
+        width: 100px;
+        margin-top: 10px;
+    }
+
+    .pie img {
+        width: 100%;
+        margin-top: 10px;
+    }
+
+</style>
+</head>
+
+<body>
+
+{{-- 🔵 FRENTE DEL CARNET --}}
+<div class="carnet">
+
+    {{-- Header --}}
+    <div class="header">
+        <img src="{{ public_path('img/carnet.png') }}">
+    </div>
+
+    {{-- Datos --}}
+    <div class="contenido">
+
+        <div class="fila">
+            <div class="label">Nombre:</div>
+            <div class="value">{{ $matricula->alumno->perfil->name }}</div>
+        </div>
+
+        <div class="fila">
+            <div class="label">Apellidos:</div>
+            <div class="value">{{ $matricula->alumno->perfil->lastname }}</div>
+        </div>
+
+        <div class="fila">
+            <div class="label">ID:</div>
+            <div class="value">
+                {{ number_format($matricula->alumno->perfil->documento, 0, ',', '.') }}
+            </div>
+        </div>
+
+        <div class="fila">
+            <div class="label">Curso:</div>
+            <div class="value curso">
+                CENTRO DE ENSEÑANZA<br>
+                {{ $matricula->curso->name }}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{{-- 🔵 REVERSO --}}
+<div class="footer">
+
+    ESTE CARNET ES PERSONAL E INTRANSFERIBLE<br>
+    EN CASO DE PERDIDA COMUNICARSE EN BOGOTÁ D.C.<br>
+    TEL: 601 732 7627
+
+    <div class="firma">
+        <img src="{{ public_path('img/firma_directora.png') }}">
+    </div>
+
+    <div class="pie">
+        <img src="{{ public_path('img/carnet-pie.png') }}">
+    </div>
+
+</div>
+
+</body>
+</html>
+
+
+<!-- <!DOCTYPE html>
+<html lang="es">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -86,4 +222,4 @@
 
 
     </body>
-</html>
+</html> -->

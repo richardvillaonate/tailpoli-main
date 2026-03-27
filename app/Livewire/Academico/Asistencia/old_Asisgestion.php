@@ -15,16 +15,6 @@ use Livewire\Component;
 
 class Asisgestion extends Component
 {
-
-
-    public $buscamin = '';
-    public $filtroSede;
-    public $filtrocurso;
-    public $filtroinicia = [];
-    public $estado_estudiante = [];
-    public $filtrociclo;
-    public $filtroprofesor;
-    public $estudy = [];
     public $grupo_id;
     public $grupo;
     public $ciclo;
@@ -55,14 +45,6 @@ class Asisgestion extends Component
         $this->cargarActual();
     }
 
-        private function cargarEstudiantesGrupo()
-    {
-        $this->estudy = DB::table('grupo_user')
-            ->where('grupo_id', $this->grupo_id)
-            ->pluck('user_id')
-            ->toArray();
-    }
-
     private function validadobles(){
         $dobles = DB::table('asistencia_detalle')
         ->select('alumno_id', 'grupo_id', DB::raw('COUNT(*) as total'))
@@ -89,10 +71,10 @@ class Asisgestion extends Component
 
         $this->reset('asist');
 
-        $esta=Asistencia::where('profesor_id', $this->grupo->profesor_id)
-                        ->where('grupo_id', $this->grupo->id)
-                        //->where('ciclo_id', $this->ciclo)
-                        ->first();
+        $esta = Asistencia::where('profesor_id', $this->grupo->profesor_id)
+        ->where('grupo_id', $this->grupo->id)
+        ->where('ciclo_id', $this->ciclo)
+        ->first();
 
         if($esta){
             $this->actual=$esta;
@@ -112,88 +94,26 @@ class Asisgestion extends Component
 
         $this->cargarEstudiantes();
     }
-    public function cargarEstudiantes(){
 
-    // 🔥 1. cargar estudiantes del grupo (igual que gestión)
-    $this->cargarEstudiantesGrupo();
 
-    // 🔥 2. aplicar mismo ciclo que asistencia
-    $this->filtrociclo = $this->ciclo;
+        public function cargarEstudiantes()
+{
+    $controles = $this->getControlesGestion();
 
-    // 🔥 3. query EXACTA de gestión
-    $alumnos = Control::with('estudiante')
-        ->where('status', true)
-        ->buscar($this->buscamin)
-        ->sede($this->filtroSede)
-        ->curso($this->filtrocurso)
-        ->inicia($this->filtroinicia)
-        ->status($this->estado_estudiante)
-        ->ciclo($this->filtrociclo)
-        ->profesor($this->filtroprofesor)
-        ->estudiantes($this->estudy) // 🔥 CLAVE
-        ->get()
-        ->pluck('estudiante')
-        ->filter();
+    $alumnos = $controles->pluck('estudiante')->filter();
 
-    // 🔥 DEBUG (opcional)
-    logger([
-        'grupo' => $this->grupo_id,
-        'ciclo' => $this->ciclo,
-        'total' => $alumnos->count()
-    ]);
+    // 🔥 LIMPIAR TODO (IMPORTANTE)
+    DB::table('asistencia_detalle')
+        ->where('grupo_id', $this->actual->grupo_id)
+        ->delete();
 
-    // 🔥 4. insertar en asistencia si no existen
+    // 🔥 INSERTAR EXACTAMENTE LOS MISMOS
     foreach ($alumnos as $value) {
-
-        $esta = DB::table('asistencia_detalle')
-            ->where('grupo_id', $this->actual->grupo_id)
-            ->where('alumno_id', $value->id)
-            ->count();
-
-        if($esta === 0){
-            $this->cargaEstudiante($value);
-        }
+        $this->cargaEstudiante($value);
     }
 
     $this->registroAsistencias();
-        // DB::enableQueryLog();
-    // dd(logger());
 }
-
-    public function cargarEstudiantes11(){
-
-        $alumnos = User::query()
-            ->select('id', 'name')
-            ->when($this->grupo_id, function($query) {
-                return $query->where('status', true)
-                    ->whereHas('alumnosGrupo', function($q) {
-                        $q->where('grupo_id', $this->grupo_id)
-                            ->select('grupo_id', 'user_id');
-                    });
-            })
-            ->with(['alumnosGrupo' => function($query) {
-                $query->where('grupo_id', $this->grupo_id)
-                        ->select('grupo_id', 'user_id');
-            }])
-            ->orderBy('name')
-            ->get();
-
-        foreach ($alumnos as $value) {
-            $esta=DB::table('asistencia_detalle')
-                        //->where('asistencia_id', $this->actual->id)
-                        ->where('grupo_id', $this->actual->grupo_id)
-                        ->where('alumno_id', $value->id)
-                        ->count();
-
-            if($esta===0){
-                $this->cargaEstudiante($value);
-            }
-        }
-
-
-
-        $this->registroAsistencias();
-    }
 
     public function cargaEstudiante($estu){
 
@@ -436,11 +356,22 @@ class Asisgestion extends Component
 
     }
 
+        public function getControlesGestion()
+    {
+        return Control::where('status', true)
+            ->whereIn('sede_id', Auth::user()->sedes->pluck('id'))
+            ->ciclo($this->ciclo)
+            ->profesor($this->grupo->profesor_id)
+            ->whereHas('estudiante.alumnosGrupo', function ($q) {
+                $q->where('grupo_id', $this->grupo_id);
+            })
+            ->with('estudiante:id,name')
+            ->get();
+    }
+
     public function exportar(){
         return new AcaAsistenciaExport($this->actual->id, $this->xls,$this->asist,$this->grupo->name);
     }
-
-    
 
     public function render()
     {

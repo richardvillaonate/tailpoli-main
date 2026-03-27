@@ -1,4 +1,7 @@
+
+
 <div>
+  
     @if (!$is_especiales)
         <div class="bg-blue-200 rounded-lg align-middle p-2 mb-2 text-center">
             <h1 class="text-xl uppercase">Gestión diaria</h1>
@@ -441,3 +444,5 @@
         </script>
     @endpush
 </div>
+
+

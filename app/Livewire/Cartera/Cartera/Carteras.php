@@ -159,21 +159,50 @@ class Carteras extends Component
 
         //DB::enableQueryLog();
 
-        $consulta= Cartera::with(['responsable','estadoCartera','concepto_pago'])
-                        ->buscar($this->buscamin)
-                        ->vencido($this->filtroven)
-                        ->sede($this->filtroSede)
-                        ->ciudad($this->filtroCiudad)
-                        ->status($this->estado_estudiante)
-                        ->statcar($this->estado_cartera)
-                        ->selectRaw('sum(saldo) as saldo, matricula_id, responsable_id')
-                        //->selectRaw('SUM(CASE WHEN estado_cartera_id < 5 THEN valor WHEN estado_cartera_id = 6 THEN valor ELSE 0 END) as original')
-                        ->selectRaw('sum(valor) as original')
-                        ->groupBy('matricula_id','responsable_id')
-                        ->orderBy($this->ordena, $this->ordenado)
-                        ->Paginate($this->pages);
+        // $consulta= Cartera::with(['responsable','estadoCartera','concepto_pago'])
+        //                 ->buscar($this->buscamin)
+        //                 ->vencido($this->filtroven)
+        //                 ->sede($this->filtroSede)
+        //                 ->ciudad($this->filtroCiudad)
+        //                 ->status($this->estado_estudiante)
+        //                 ->statcar($this->estado_cartera)
+        //                 ->selectRaw('sum(saldo) as saldo, matricula_id, responsable_id')
+        //                 ->selectRaw('sum(valor) as original')
+        //                 ->groupBy('matricula_id','responsable_id')
+        //                 ->orderBy($this->ordena, $this->ordenado)
+        //                 ->Paginate($this->pages);
 
         //dd(DB::getQueryLog());
+        $consulta = Cartera::query()
+    ->join('matriculas', 'carteras.matricula_id', '=', 'matriculas.id')
+
+    ->with(['responsable','estadoCartera','concepto_pago'])
+    ->whereIn('carteras.status_est', $this->estado_estudiante)
+    ->whereIn('carteras.estado_cartera_id', $this->estado_cartera)
+
+    ->buscar($this->buscamin)
+    ->vencido($this->filtroven)
+    ->sede($this->filtroSede)
+    ->ciudad($this->filtroCiudad)
+    // ->status($this->estado_estudiante)
+    // ->statcar($this->estado_cartera)
+
+    ->selectRaw('
+        SUM(carteras.saldo) as saldo,
+        SUM(carteras.valor) as original,
+        carteras.matricula_id,
+        carteras.responsable_id,
+        matriculas.metodo as metodo_pago
+    ')
+
+    ->groupBy(
+        'carteras.matricula_id',
+        'carteras.responsable_id',
+        'matriculas.metodo'
+    )
+
+    ->orderBy($this->ordena, $this->ordenado)
+    ->paginate($this->pages);
 
         return $consulta;
     }
@@ -215,6 +244,72 @@ class Carteras extends Component
                                 ->orderBy('id','ASC')
                                 ->get();
     }
+
+ public function metodoPago($matriculaId)
+{
+    return \App\Models\Academico\Matricula::with('configPago')
+        ->where('id', $matriculaId)
+        ->first()?->configPago?->descripcion;
+}
+
+                public function cuotasPendientes($matriculaId) {
+    $hoy = now();
+
+    // 🔴 Cuotas vencidas (las verdaderas pendientes)
+    $vencidas = \App\Models\Financiera\Cartera::where('matricula_id', $matriculaId)
+        ->where('estado_cartera_id', '<', 5)
+        ->whereDate('fecha_pago', '<', $hoy)
+        ->orderBy('fecha_pago')
+        ->get();
+
+    $cantidad = $vencidas->count();
+    $primeraVencida = $vencidas->first();
+
+    $dias = 0;
+
+    if ($primeraVencida) {
+        $dias = $hoy->diffInDays($primeraVencida->fecha_pago);
+    }
+
+    // 🟢 Próxima cuota (aunque esté al día)
+    $proxima = \App\Models\Financiera\Cartera::where('matricula_id', $matriculaId)
+        ->where('estado_cartera_id', '<', 5)
+        ->whereDate('fecha_pago', '>=', $hoy)
+        ->orderBy('fecha_pago')
+        ->first();
+
+    return [
+        'cantidad_vencidas' => $cantidad,
+        'fecha_vencida' => $primeraVencida->fecha_pago ?? null,
+        'dias_mora' => $dias,
+        'proximo_pago' => $proxima->fecha_pago ?? null
+    ];
+}
+
+    public function cuotasPendientem($matriculaId) {
+    $hoy = now();
+
+    $cuotas = \App\Models\Financiera\Cartera::where('matricula_id', $matriculaId)
+        ->where('estado_cartera_id', '<', 5) // pendientes
+        ->orderBy('fecha_pago')
+        ->get();
+
+    $cantidad = $cuotas->count();
+
+    $primera = $cuotas->first();
+
+    $dias = 0;
+
+    if ($primera && $primera->fecha_pago < $hoy) {
+        $dias = $hoy->diffInDays($primera->fecha_pago);
+    }
+
+    return [
+        'cantidad' => $cantidad,
+        'fecha' => $primera->fecha_pago ?? null,
+        'dias' => $dias
+    ];
+}
 
     public function render()
     {

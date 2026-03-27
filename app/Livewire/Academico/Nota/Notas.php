@@ -1,14 +1,22 @@
 <?php
 
 namespace App\Livewire\Academico\Nota;
-
-use App\Models\Academico\Curso;
+use App\Exports\GraduacionExport;
+use App\Models\Academico\Ciclo;
+use App\Models\Academico\Control;
 use App\Models\Academico\Nota;
+use App\Models\Academico\Curso;
+use App\Models\Academico\Grupo;
+use App\Models\Academico\Modulo;
+use App\Models\Configuracion\Sede;
+use App\Models\Configuracion\Estado;
 use App\Models\User;
 use App\Traits\FiltroTrait;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class Notas extends Component
 {
@@ -25,19 +33,32 @@ class Notas extends Component
     public $is_asistencia = false;
     public $act;
 
+    public $filtroinicia=[];
     public $filtroprofesor;
     public $filtrojornada;
     public $filtrocurso;
+    public $filtroSede;
+    public $filtrocursogrupo=[];
+    public $estado_estudiante=[];
+    public $filtrociclo;
+    public $filtrogrupo;
+    public $estudy=[];
 
     public $elegido;
 
     public $buscar='';
     public $buscamin='';
+    public $sedes=[];
 
     protected $listeners = ['refresh' => '$refresh'];
 
     public function mount(){
-        $this->claseFiltro(17);
+        $this->claseFiltro(20);
+         foreach (Auth::user()->sedes as $value) {
+        if(!in_array($value->id, $this->sedes)){
+            $this->sedes[] = $value->id;
+        }
+    }
     }
 
     //Cargar variable
@@ -133,9 +154,9 @@ class Notas extends Component
     {
         
         return Nota::buscar($this->buscamin)
-                        ->profesor(intval($this->filtroprofesor))
-                        ->jornada(intval($this->filtrojornada))
-                        ->curso(intval($this->filtrocurso))
+                        ->profesor($this->filtroprofesor)
+                        ->jornada($this->filtrojornada)
+                        ->curso($this->filtrocurso)
                         ->orderBy($this->ordena, $this->ordenado)
                         ->paginate($this->pages);
     }
@@ -151,12 +172,110 @@ class Notas extends Component
                         ->get();
     }
 
+      private function sedeasignadas(){
+
+        return Sede::whereIn('id',$this->sedes)
+                    ->orderBy('name', 'asc')
+                    ->get();
+    }
+
+    private function grupos(){
+    return Grupo::where('inscritos','>',0)
+                    ->where('status',true)
+                    ->sede($this->filtroSede)
+                    ->curso($this->filtrocursogrupo)
+
+                    ->selectRaw('
+                        MIN(id) as id,
+                        MIN(name) as name,
+                        ciclo_id,
+                        MIN(jornada) as jornada
+                    ')
+
+                    ->groupBy('ciclo_id')
+
+                    ->orderBy('jornada','ASC')
+                    ->orderBy('name','ASC')
+
+                    ->get();
+}
+      private function controles()
+    {
+        $controles = Control::where('status', true)
+                        ->whereIn('sede_id', $this->sedes)
+                        ->buscar($this->buscamin)
+                        ->sede($this->filtroSede)
+                        ->curso($this->filtrocurso)
+                        ->inicia($this->filtroinicia)
+                        ->status($this->estado_estudiante)
+                        ->ciclo($this->filtrociclo)
+                        ->profesor($this->filtroprofesor)
+                        ->estudiantes($this->estudy)
+                        ->orderBy($this->ordena, $this->ordenado)
+                        ->paginate($this->pages);
+
+        $this->ciclos();
+
+        return $controles;
+    }
+     private function status_estu(){
+        return DB::table('estados')
+                    ->orderBy('name')
+                    ->get();
+
+    }
+
+    private function ciclos(){
+        $crt=Control::where('status', true)
+                    ->whereIn('sede_id', $this->sedes)
+                    ->buscar($this->buscamin)
+                    ->sede($this->filtroSede)
+                    ->curso($this->filtrocurso)
+                    ->inicia($this->filtroinicia)
+                    ->status($this->estado_estudiante)
+                    ->profesor($this->filtroprofesor)
+                    ->select('ciclo_id')
+                    ->groupBy('ciclo_id')
+                    ->get();
+
+        $ids=array();
+
+        foreach ($crt as $value) {
+            array_push($ids,$value->ciclo_id);
+        }
+
+        return Ciclo::whereIn('id',$ids)
+                        ->select('id','name','inicia')
+                        ->orderBy('inicia','DESC')
+                        ->get();
+    }
+
+    private function estados(){
+        return Estado::where('status', true)
+                        ->orderBy('name', 'ASC')
+                        ->get();
+
+    }
+
+        public function updated($property)
+    {
+        if (str_contains($property, 'filtro')) {
+            $this->resetPage();
+        }
+    }
+
     public function render()
     {
         return view('livewire.academico.nota.notas',[
+            'controles'     =>$this->controles(),
+            'estados'       =>$this->estados(),
+            'status_estu'   =>$this->status_estu(),
+            'ciclos'        =>$this->ciclos(),
             'notas'=>$this->notas(),
             'profesores'=>$this->profesores(),
             'cursos'=>$this->cursos(),
+            'asignadas'     =>$this->sedeasignadas(),
+            'grupos'        =>$this->grupos()
         ]);
     }
 }

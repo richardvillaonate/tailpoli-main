@@ -26,3 +26,14 @@ Route::middleware([
         return view('dashboard');
     })->name('dashboard');
 });
+
+Route::get('/carnet/{id}', function($id){
+
+    $matricula = \App\Models\Academico\Matricula::find($id);
+
+    $nombre = $matricula->alumno->documento."_carnet.pdf";
+
+    return \Barryvdh\DomPDF\Facade\Pdf::loadView('pdfs.carnet', compact('matricula','id'))
+            ->download($nombre);
+
+})->name('carnet.descargar');

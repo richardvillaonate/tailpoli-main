@@ -13,6 +13,10 @@
         <div class="grid sm:grid-cols-1 md:grid-cols-6 gap-1 m-1">
             @if ($is_carnet)
 
+                <a href="{{ route('carnet.descargar', $matricula->id) }}" target="_blank">
+                    Descargar carnet
+                </a>
+
                 <a wire:click.prevent="carnetgen()" class="block max-w-sm p-1 bg-teal-400 border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
 
                     <h5 class="mb-2 text-xs md:text-lg font-bold tracking-tight text-gray-900 dark:text-white">

@@ -1,4 +1,34 @@
+
 <div>
+    <!-- {{-- 🔥 DEBUG ASISTENCIA --}}
+<div class="bg-red-100 p-4 mb-4 rounded">
+    <h2 class="font-bold text-lg">DEBUG ASISTENCIA</h2>
+
+    <p><strong>Grupo ID:</strong> {{ $grupo_id }}</p>
+    <p><strong>Ciclo:</strong> {{ $ciclo }}</p>
+    <p><strong>Total asist:</strong> {{ count($asist) }}</p>
+
+    <hr class="my-2">
+
+    <p><strong>Encabezados:</strong></p>
+    <pre>{{ json_encode($encabezado, JSON_PRETTY_PRINT) }}</pre>
+
+    <p><strong>Primer registro asist:</strong></p>
+    <pre>
+        {{ isset($asist[0]) ? json_encode($asist[0], JSON_PRETTY_PRINT) : 'Sin datos' }}
+    </pre>
+
+    <p><strong>IDs estudiantes:</strong></p>
+    <pre>
+        {{ json_encode(collect($asist)->pluck(1), JSON_PRETTY_PRINT) }}
+    </pre>
+</div> -->
+
+<p><strong>SQL:</strong></p>
+<pre>{{ $sql ?? 'no disponible' }}</pre>
+
+<p><strong>Bindings:</strong></p>
+<pre>{{ json_encode($bindings ?? [], JSON_PRETTY_PRINT) }}</pre>
     <livewire:academico.matricula.matriculas-grupo :elegido="$grupo_id" />
     <h1 class="text-center uppercase p-3 rounded-lg bg-cyan-100 font-extrabold">
         Registrar asistencia
