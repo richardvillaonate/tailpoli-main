@@ -9,6 +9,8 @@ use App\Traits\PdfTrait;
 use Carbon\Carbon;
 use Livewire\Component;
 
+
+
 class Documentos extends Component
 {
     use PdfTrait;
@@ -158,14 +160,57 @@ class Documentos extends Component
         }
     }
 
-    public function carnetgen(){
+    public function carnetgen() {
+    try {
+        // Validar matrícula
+        if (!$this->matricula || !$this->matricula->id) {
+            $this->dispatch('alerta', name: 'Error: No hay matrícula válida');
+            return;
+        }
+
+        // Validar email
+        $email = $this->matricula->alumno->email ?? null;
+        if (!$email) {
+            $this->dispatch('alerta', name: 'Error: El alumno no tiene correo registrado');
+            return;
+        }
+
+        // 1. Generar carnet
+        $carnetGenerado = $this->carnet($this->matricula->id);
+
+        if (!$carnetGenerado) {
+            $this->dispatch('alerta', name: 'Error al generar el carnet');
+            return;
+        }
+
+        // 2. Enviar correo
+        $correoEnviado = $this->claseEmail(2, $this->matricula->id);
+
+        if (!$correoEnviado) {
+            $this->dispatch('alerta', name: 'Error al enviar el correo');
+            return;
+        }
+
+        // ✅ Todo OK
+        $this->dispatch('alerta', name: 'Carnet enviado correctamente a: ' . $email);
+
+    } catch (\Exception $e) {
+
+        // Log para depuración
+        \Log::error('Error en carnetgen: ' . $e->getMessage());
+
+        $this->dispatch('alerta', name: 'Ocurrió un error inesperado al generar o enviar el carnet');
+    }
+}
+
+    public function carnetgen_old(){
         //Genera carnet
         $this->carnet($this->matricula->id);
 
         //Enviar email
-        // $this->claseEmail(2,$this->matricula->id);
+        $this->claseEmail(2,$this->matricula->id);
 
-        // $this->dispatch('alerta', name:'Se ha enviado el carnet al correo: '.$this->matricula->alumno->email);
+        $this->dispatch('alerta', name:'Se ha enviado el carnet al correo: '.$this->matricula->alumno->email);
     }
 
     public function render()

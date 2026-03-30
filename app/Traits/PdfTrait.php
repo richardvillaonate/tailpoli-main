@@ -25,7 +25,40 @@ trait PdfTrait
     public $accion;
 
 
-    public function carnet($id){
+    public function carnet($id)
+{
+    try {
+        $matricula = Matricula::find($id);
+
+        if (!$matricula) {
+            throw new \Exception('No existe matrícula');
+        }
+
+        if (!$matricula->alumno) {
+            throw new \Exception('La matrícula no tiene alumno asociado');
+        }
+
+        $nombre = $matricula->alumno->documento . "_carnet.pdf";
+        $rutapdf = 'carnet/' . $nombre;
+
+        // ✅ Generar PDF correctamente
+        $pdf = Pdf::loadView('pdfs.carnet', compact('matricula','id'))->output();
+
+        // ✅ Guardar
+        Storage::put($rutapdf, $pdf);
+
+        return true; // 🔥 IMPORTANTE
+
+    } catch (\Exception $e) {
+
+        Log::error('Error generando carnet: ' . $e->getMessage());
+
+        return false; // 🔥 IMPORTANTE
+    }
+}
+
+
+    public function carnetdescarga($id){
 
     $matricula = Matricula::find($id);
 
@@ -36,6 +69,7 @@ trait PdfTrait
     $nombre = $matricula->alumno->documento."_carnet.pdf";
 
     return Pdf::loadView('pdfs.carnet', compact('matricula','id'))
+                ->setPaper([0,0,300,200]) 
                 ->download($nombre); // 🔥 descarga automática
 }
 
@@ -55,7 +89,7 @@ trait PdfTrait
                 ->download($nombre); // 🔥 descarga directa
 }
 
-    public function carnet2($id){
+    public function carnet_88($id){
 
         $matricula=Matricula::find($id);
         $id=$id;
