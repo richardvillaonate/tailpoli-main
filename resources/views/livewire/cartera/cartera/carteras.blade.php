@@ -48,7 +48,7 @@
                         </th>
 
                         <th scope="col" class="px-6 py-3">
-                            Fecha
+                            Fecha Y valor couta 
                         </th>
 
                         <th scope="col" class="px-6 py-3">
@@ -81,6 +81,7 @@
                     </tr>
                 </thead>
                 <tbody>
+                    
                     @foreach ($carteras as $cartera)
                         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-green-200">
                             <th>
@@ -101,7 +102,7 @@
 
                             </th>
                             <th scope="row" class="px-6 py-4 font-medium text-gray-900  dark:text-white capitalize">
-                                {{$cartera->responsable->documento}} - {{$cartera->responsable->name}} - {{$cartera->matricula->curso->name}}
+                                {{$cartera->responsable_documento}} - {{$cartera->responsable_nombre}} - {{$cartera->matricula->curso->name}}
                             </th>
                             <th scope="row" class="px-6 py-4 font-medium text-gray-900  dark:text-white capitalize">
                                 <!-- {{ $this->metodoPago($cartera->matricula_id) }}<td class="text-center"> -->
@@ -131,7 +132,7 @@
 
                             <!-- FECHA -->
                             <th class="text-center">
-                               {{ $cuotas['fecha_vencida'] ?? $cuotas['proximo_pago'] ?? '-' }}
+                               {{ $cuotas['fecha_vencida'] ?? $cuotas['proximo_pago'] ?? '-' }} -- {{ $cuotas['valor_primera_vencida'] ? '$ ' . number_format($cuotas['valor_primera_vencida'], 0, ',', '.') : '-' }}
                             </td>
 
                             <!-- MORA -->

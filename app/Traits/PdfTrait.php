@@ -36,7 +36,6 @@ trait PdfTrait
     $nombre = $matricula->alumno->documento."_carnet.pdf";
 
     return Pdf::loadView('pdfs.carnet', compact('matricula','id'))
-                ->setPaper([0,0,300,200]) 
                 ->download($nombre); // 🔥 descarga automática
 }
 

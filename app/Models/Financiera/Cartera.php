@@ -60,6 +60,20 @@ class Cartera extends Model
     }
 
     public function scopeBuscar($query, $item){
+    $query->when($item ?? null, function($query, $item){
+
+        $query->where(function($q) use ($item) {
+            $q->where('concepto', 'like', "%".$item."%")
+              ->orWhereHas('responsable', function($q2) use($item){
+                  $q2->where('users.name', 'like', "%".$item."%")
+                     ->orWhere('users.documento', 'like', "%".$item."%");
+              });
+        });
+
+    });
+}
+
+    public function scopeBuscar2 ($query, $item){
         $query->when($item ?? null, function($query, $item){
             $query->where('concepto', 'like', "%".$item."%")
 
@@ -112,6 +126,16 @@ class Cartera extends Model
     public function scopeStatcar($query, $stat){
         $query->when($stat ?? null, function($query, $stat){
             $query->whereIn('estado_cartera_id', $stat);
+        });
+    }
+
+    public function scopeBuscarJoin($query, $item){
+        $query->when($item ?? null, function($query, $item){
+            $query->where(function($q) use ($item) {
+                $q->where('carteras.concepto', 'like', "%".$item."%")
+                ->orWhere('users.name', 'like', "%".$item."%")
+                ->orWhere('users.documento', 'like', "%".$item."%");
+            });
         });
     }
 

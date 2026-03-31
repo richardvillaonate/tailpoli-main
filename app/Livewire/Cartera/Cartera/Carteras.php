@@ -72,14 +72,18 @@ class Carteras extends Component
     }
 
     //Cargar variable
-    public function buscaText(){
+    // public function buscaText(){
+    //     $this->resetPage();
+    //      $this->buscamin = strtolower($this->buscar);
+    // }
+     public function buscaText(){
         $this->resetPage();
         $this->reset(
                 'filtroven',
                 'filtroCiudad',
                 'filtroSede',
-                'estado_estudiante',
-                //'estado_cartera',
+                // 'estado_estudiante',
+                // 'estado_cartera',
         );
         $this->buscamin=strtolower($this->buscar);
     }
@@ -155,28 +159,135 @@ class Carteras extends Component
                     ->get();
     }
 
-    private function carteras(){
+
+    private function carteras()
+{
+    $consulta = Cartera::query()
+        ->join('matriculas', 'carteras.matricula_id', '=', 'matriculas.id')
+        ->join('users', 'carteras.responsable_id', '=', 'users.id')
+        ->whereIn('carteras.estado_cartera_id', $this->estado_cartera)
+
+        ->when($this->buscamin, function ($q) {
+            $q->where(function ($q2) {
+                $q2->where('users.documento', 'like', "%{$this->buscamin}%")
+                   ->orWhere('users.name', 'like', "%{$this->buscamin}%")
+                   ->orWhere('carteras.concepto', 'like', "%{$this->buscamin}%");
+            });
+        })
+
+        ->when($this->filtroven, function ($q) {
+            $q->whereBetween('carteras.fecha_pago', $this->filtroven);
+        })
+
+        ->when($this->filtroSede, function ($q) {
+            $q->where('carteras.sede_id', $this->filtroSede);
+        })
+
+        ->when($this->filtroCiudad, function ($q) {
+            $q->where('carteras.sector_id', $this->filtroCiudad);
+        })
+
+        ->selectRaw('
+            SUM(carteras.saldo) as saldo,
+            SUM(carteras.valor) as original,
+            carteras.matricula_id,
+            carteras.responsable_id,
+            MIN(users.name) as responsable_nombre,
+            MIN(users.documento) as responsable_documento,
+            MIN(matriculas.metodo) as metodo_pago
+        ')
+
+        ->groupBy(
+            'carteras.matricula_id',
+            'carteras.responsable_id'
+        )
+
+        ->orderBy($this->ordena, $this->ordenado)
+        ->paginate($this->pages);
+
+    return $consulta;
+}
+
+    private function carterasold(){
 
         //DB::enableQueryLog();
 
-        // $consulta= Cartera::with(['responsable','estadoCartera','concepto_pago'])
-        //                 ->buscar($this->buscamin)
-        //                 ->vencido($this->filtroven)
-        //                 ->sede($this->filtroSede)
-        //                 ->ciudad($this->filtroCiudad)
-        //                 ->status($this->estado_estudiante)
-        //                 ->statcar($this->estado_cartera)
-        //                 ->selectRaw('sum(saldo) as saldo, matricula_id, responsable_id')
-        //                 ->selectRaw('sum(valor) as original')
-        //                 ->groupBy('matricula_id','responsable_id')
-        //                 ->orderBy($this->ordena, $this->ordenado)
-        //                 ->Paginate($this->pages);
+        $consulta= Cartera::with(['responsable','estadoCartera','concepto_pago'])
+                        ->buscar($this->buscamin)
+                        ->vencido($this->filtroven)
+                        ->sede($this->filtroSede)
+                        ->ciudad($this->filtroCiudad)
+                        ->status($this->estado_estudiante)
+                        ->statcar($this->estado_cartera)
+                        ->selectRaw('sum(saldo) as saldo, matricula_id, responsable_id')
+                        //->selectRaw('SUM(CASE WHEN estado_cartera_id < 5 THEN valor WHEN estado_cartera_id = 6 THEN valor ELSE 0 END) as original')
+                        ->selectRaw('sum(valor) as original')
+                        ->groupBy('matricula_id','responsable_id')
+                        ->orderBy($this->ordena, $this->ordenado)
+                        ->Paginate($this->pages);
 
         //dd(DB::getQueryLog());
-        $consulta = Cartera::query()
+
+        return $consulta;
+    }
+    private function carterasnew()
+{
+    $consulta = Cartera::query()
+        ->join('matriculas', 'carteras.matricula_id', '=', 'matriculas.id')
+        ->join('users', 'carteras.responsable_id', '=', 'users.id')
+
+        ->whereIn('carteras.status_est', $this->estado_estudiante)
+        ->whereIn('carteras.estado_cartera_id', $this->estado_cartera)
+
+        ->when($this->buscamin, function ($q) {
+            $q->where(function ($q2) {
+                $q2->where('users.documento', 'like', "%{$this->buscamin}%")
+                   ->orWhere('users.name', 'like', "%{$this->buscamin}%")
+                   ->orWhere('carteras.concepto', 'like', "%{$this->buscamin}%");
+            });
+        })
+
+        ->when($this->filtroven, function ($q) {
+            $q->whereBetween('carteras.fecha_pago', $this->filtroven);
+        })
+
+        ->when($this->filtroSede, function ($q) {
+            $q->where('carteras.sede_id', $this->filtroSede);
+        })
+
+        ->when($this->filtroCiudad, function ($q) {
+            $q->where('carteras.sector_id', $this->filtroCiudad);
+        })
+
+        ->selectRaw('
+            SUM(carteras.saldo) as saldo,
+            SUM(carteras.valor) as original,
+            carteras.matricula_id,
+            carteras.responsable_id,
+            users.name as responsable_nombre,
+            users.documento as responsable_documento,
+            matriculas.metodo as metodo_pago
+        ')
+
+        ->groupBy(
+            'carteras.matricula_id',
+            'carteras.responsable_id',
+            'users.name',
+            'users.documento',
+            'matriculas.metodo'
+        )
+
+        ->orderBy($this->ordena, $this->ordenado)
+        ->paginate($this->pages);
+
+    return $consulta;
+}
+                
+    private function carteras3(){
+      
+       $consulta = Cartera::query()
     ->join('matriculas', 'carteras.matricula_id', '=', 'matriculas.id')
 
-    ->with(['responsable','estadoCartera','concepto_pago'])
     ->whereIn('carteras.status_est', $this->estado_estudiante)
     ->whereIn('carteras.estado_cartera_id', $this->estado_cartera)
 
@@ -184,8 +295,6 @@ class Carteras extends Component
     ->vencido($this->filtroven)
     ->sede($this->filtroSede)
     ->ciudad($this->filtroCiudad)
-    // ->status($this->estado_estudiante)
-    // ->statcar($this->estado_cartera)
 
     ->selectRaw('
         SUM(carteras.saldo) as saldo,
@@ -201,10 +310,13 @@ class Carteras extends Component
         'matriculas.metodo'
     )
 
-    ->orderBy($this->ordena, $this->ordenado)
-    ->paginate($this->pages);
+    ->orderBy($this->ordena, $this->ordenado);
 
-        return $consulta;
+// 🔥 DEBUG AQUÍ
+dd($consulta->toSql(), $consulta->getBindings());
+
+// luego (esto no se ejecutará por el dd)
+return $consulta->paginate($this->pages);
     }
 
     private function total(){
@@ -265,6 +377,9 @@ class Carteras extends Component
     $cantidad = $vencidas->count();
     $primeraVencida = $vencidas->first();
 
+    // dump($vencidas); // 🔥 DEBUG: Ver las cuotas vencidas
+    $valorPrimera = $primeraVencida ? $primeraVencida->valor : null;
+
     $dias = 0;
 
     if ($primeraVencida) {
@@ -282,7 +397,8 @@ class Carteras extends Component
         'cantidad_vencidas' => $cantidad,
         'fecha_vencida' => $primeraVencida->fecha_pago ?? null,
         'dias_mora' => $dias,
-        'proximo_pago' => $proxima->fecha_pago ?? null
+        'proximo_pago' => $proxima->fecha_pago ?? null,
+        'valor_primera_vencida' => $valorPrimera
     ];
 }
 

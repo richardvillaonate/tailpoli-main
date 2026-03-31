@@ -1,79 +1,252 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 
 <style>
     body {
-        font-family: Arial, Helvetica, sans-serif;
+        background: #e5e5e5;
+        font-family: Arial;
     }
 
-    /* 🔥 TAMAÑO REAL TIPO CARNET */
+    .contenedor {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 40px;
+        margin-top: 50px;
+    }
+
+    /* 🔴 GUIAS */
+    .guia {
+        width: 324px;
+        border-top: 2px dashed red;
+        text-align: center;
+        font-size: 10px;
+        color: red;
+        margin: 5px 0;
+    }
+
+    /* 🪪 CARNET */
     .carnet {
-        width: 350px;
-        height: 220px;
-        border: 2px solid #000;
-        padding: 5px;
+        width: 324px;
+        height: 204px;
+        background: white;
+        border: 2px solid black;
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
     }
 
-    .header img {
+    /* HEADER */
+    .header {
+        display: flex;
+        align-items: center;
+        background: #0d3b66;
+        color: white;
+        padding: 4px;
+        gap: 5px;
+    }
+
+    .logo {
+        width: 35px;
+        height: 35px;
+        padding: 1%;
+    }
+
+    .logo img {
         width: 100%;
-        height: auto;
     }
 
+    .titulo {
+        font-size: 12px;
+    }
+
+    .nombre {
+        font-weight: bold;
+        font-size: 21px;
+    }
+
+    /* FRANJA */
+    .franja {
+        background: #16a34a;
+        color: white;
+        text-align: center;
+        font-size: 13px;
+        font-weight: bold;
+        padding: 2px;
+    }
+    .franj1{
+        background: #0d3b66;
+        color: white;
+        text-align: center;
+        font-size: 13px;
+        font-weight: bold;
+        padding: 10px;
+    }
+
+    /* CONTENIDO */
     .contenido {
-        margin-top: 5px;
-        font-size: 11px;
+        display: flex;
+        padding: 5px;
+        gap: 5px;
+        flex: 1;
+    }
+
+    .foto {
+        width: 105px;
+        height: 140px;
+        border: 1px solid #ccc;
+    }
+
+    .foto img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .datos {
+        font-size: 9px;
+        flex: 1;
     }
 
     .fila {
-        display: table;
-        width: 100%;
         margin-bottom: 3px;
+        font-size: 12px;
     }
 
     .label {
-        display: table-cell;
-        width: 40%;
         font-weight: bold;
     }
 
-    .value {
-        display: table-cell;
-        width: 60%;
+    .valor {
         text-transform: uppercase;
-        font-weight: bold;
     }
 
-    .curso {
-        font-size: 10px;
-    }
-
+    /* FOOTER */
     .footer {
-        width: 350px;
-        height: 180px;
-        border: 2px solid #000;
-        margin-top: 10px;
-        padding: 5px;
+        background: #0d3b66;
+        color: white;
         text-align: center;
-        font-size: 10px;
+        font-size: 13px;
+        padding: 2px;
+    }
+
+    /* REVERSO */
+    .reverso {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 8px;
+        font-size: 12px;
+        text-align: center;
+        height: 100%;
     }
 
     .firma img {
-        width: 100px;
-        margin-top: 10px;
+        width: 120px;
     }
 
     .pie img {
         width: 100%;
-        margin-top: 10px;
+        height: 25px;
+        object-fit: cover;
+    }
+    .texto{
+        padding: 2%;
     }
 
 </style>
+
 </head>
 
 <body>
 
+<div class="contenedor">
+
+    <!-- 🔴 GUIA SUPERIOR -->
+    <div class="guia">--- CORTE ---</div>
+
+    <!-- 🪪 FRENTE -->
+    <div class="carnet">
+
+        <div class="header">
+            <div class="logo">
+                <img src="img/icono.png">
+            </div>
+
+            <div class="titulo">
+                <div class="nombre">INSTITUTO POLIANDINO</div>
+                Resolución. 18031 de 02 de Nov. 2017 Bogotá
+               
+                    
+            </div>
+        </div>
+
+        <div class="franja">ESTUDIANTE</div>
+
+        <div class="contenido">
+
+            <div class="foto">
+                <!-- <img src="https://via.placeholder.com/60x75"> -->
+            </div>
+
+            <div class="datos">
+                <div class="fila"><span class="label">Nombre:</span> <span class="valor">{{ $matricula->alumno->perfil->name }}</span></div>
+                <div class="fila"><span class="label">Apellidos:</span> <span class="valor">{{ $matricula->alumno->perfil->lastname }}</span></div>
+                <div class="fila"><span class="label">Identificación:</span> <span class="valor">{{ $matricula->alumno->perfil->documento }}</span></div>
+                <div class="fila"><span class="label">Curso:</span> <span class="valor">{{ $matricula->curso->name }}</span></div>
+            </div>
+
+        </div>
+
+        <div class="footer">
+            Carnet institucional
+        </div>
+
+    </div>
+
+    <!-- 🔴 GUIA CORTE ENTRE CARAS -->
+    <div class="guia">--- CORTE / DOBLEZ ---</div>
+
+ <!-- 🔁 REVERSO -->
+<div class="carnet">
+
+    <div class="reverso">
+
+        <!-- TEXTO SUPERIOR -->
+        <div class="texto">
+            ESTE CARNET ES PERSONAL E INTRANSFERIBLE <br> <br>
+            EN CASO DE PÉRDIDA COMUNICARSE EN BOGOTÁ D.C. <br>
+            TEL: 601 732 7627
+        </div>
+
+        <!-- FIRMA -->
+        <div class="firma">
+            <img src="{{ public_path('img/firma_directora.png') }}">
+            <div class="linea"></div>
+            <!-- <div class="cargo">DIRECCIÓN</div> -->
+        </div>
+
+        <!-- PIE -->
+        <div class="pie">
+            <div class="franj1">ESTUDIANTE</div>
+            <!-- <img src="https://via.placeholder.com/324x25"> -->
+        </div>
+
+    </div>
+
+</div>
+
+    <!-- 🔴 GUIA INFERIOR -->
+    <div class="guia">--- CORTE ---</div>
+
+</div>
+
+</body>
+</html>
+<!-- 
 {{-- 🔵 FRENTE DEL CARNET --}}
 <div class="carnet">
 
@@ -131,7 +304,7 @@
 </div>
 
 </body>
-</html>
+</html> -->
 
 
 <!-- <!DOCTYPE html>

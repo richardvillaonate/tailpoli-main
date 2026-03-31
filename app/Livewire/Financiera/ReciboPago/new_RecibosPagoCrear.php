@@ -161,7 +161,7 @@ class RecibosPagoCrear extends Component
         $fin = DB::table('apoyo_recibo')
                     ->where('id_creador', Auth::user()->id)
                     ->wherein('tipo',['cartera','financiero'])
-                    ->where('id_almacen',$this->alumnodocumento)
+                    ->where('id_almacen',$this->alumno_id)
                     ->get();
 
         foreach ($fin as $value) {
@@ -318,7 +318,7 @@ class RecibosPagoCrear extends Component
     public function cargando(){
         $this->cargados=DB::table('apoyo_recibo')
                             ->where('id_creador', Auth::user()->id)
-                            ->where('id_almacen',$this->alumnodocumento)
+                            ->where('id_almacen',$this->alumno_id)
                             ->get();
     }
 
@@ -724,7 +724,7 @@ class RecibosPagoCrear extends Component
                     'id_almacen'    =>$this->alumnodocumento
                 ]);
             }else{
-                $ultimo=DB::table('apoyo_recibo')->where('id_almacen',$this->alumnodocumento)->orderBy('id', 'DESC')->first();
+                $ultimo=DB::table('apoyo_recibo')->where('id_almacen',$this->alumno_id)->orderBy('id', 'DESC')->first();
                 DB::table('apoyo_recibo')->insert([
                     'tipo'          =>'financiero',
                     'id_creador'    =>Auth::user()->id,
@@ -959,7 +959,8 @@ class RecibosPagoCrear extends Component
                 $tipo=$desc->tipo;
                 $conceptodesc=$desc->id;
             }
-
+                    
+                    
 
             foreach ($this->pendientes as $value) {
 
@@ -1215,7 +1216,6 @@ class RecibosPagoCrear extends Component
 
         $ruta='/impresiones/imprecibo?rut='.$this->ruta.'&r='.$recibo->id;
 
-        
                 dd([
             'recibo' => $recibo,
             'cargados' => $this->cargados,
