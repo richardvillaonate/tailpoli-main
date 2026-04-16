@@ -25,79 +25,47 @@ trait PdfTrait
     public $accion;
 
 
-    public function carnet($id)
-{
+    public function carnet($id){
     try {
         $matricula = Matricula::find($id);
 
-        if (!$matricula) {
-            throw new \Exception('No existe matrícula');
+        if (!$matricula || !$matricula->alumno) {
+            throw new \Exception('Matrícula o alumno no válido');
         }
 
-        if (!$matricula->alumno) {
-            throw new \Exception('La matrícula no tiene alumno asociado');
-        }
+        $nombre = $matricula->alumno->documento."_carnet.pdf";
+        $rutapdf = 'carnet/'.$nombre;
 
-        $nombre = $matricula->alumno->documento . "_carnet.pdf";
-        $rutapdf = 'carnet/' . $nombre;
+        $pdf = Pdf::loadView('pdfs.carnet', compact('matricula','id'))
+                    ->output();
 
-        // ✅ Generar PDF correctamente
-        $pdf = Pdf::loadView('pdfs.carnet', compact('matricula','id'))->output();
-
-        // ✅ Guardar
         Storage::put($rutapdf, $pdf);
 
-        return true; // 🔥 IMPORTANTE
+        return true;
 
     } catch (\Exception $e) {
 
-        Log::error('Error generando carnet: ' . $e->getMessage());
+        $errorId = uniqid('carnet_');
 
-        return false; // 🔥 IMPORTANTE
+        Log::error("[$errorId] Error generando carnet: ".$e->getMessage(), [
+            'linea' => $e->getLine(),
+            'archivo' => $e->getFile(),
+            'matricula_id' => $id
+        ]);
+
+        return $errorId; // 👈 devolvemos el ID
     }
 }
 
+    // public function carnet($id){
 
-    public function carnetdescarga($id){
-
-    $matricula = Matricula::find($id);
-
-    if(!$matricula){
-        dd('No existe matrícula');
-    }
-
-    $nombre = $matricula->alumno->documento."_carnet.pdf";
-
-    return Pdf::loadView('pdfs.carnet', compact('matricula','id'))
-                ->setPaper([0,0,300,200]) 
-                ->download($nombre); // 🔥 descarga automática
-}
-
-
-
-    public function carnet3($id){
-
-    $matricula = Matricula::find($id);
-
-    if(!$matricula){
-        dd('No existe matrícula');
-    }
-
-    $nombre = $matricula->alumno->documento."_carnet.pdf";
-
-    return Pdf::loadView('pdfs.carnet', compact('matricula','id'))
-                ->download($nombre); // 🔥 descarga directa
-}
-
-    public function carnet_88($id){
-
-        $matricula=Matricula::find($id);
-        $id=$id;
-        $nombre=$matricula->alumno->documento."_carnet.pdf";
-        $rutapdf='carnet/'.$nombre;
-        $pdf = Pdf::loadView('pdfs.carnet', compact('matricula','id'))->download()->getOriginalContent();
-        Storage::put($rutapdf, $pdf);
-    }
+    //     $matricula=Matricula::find($id);
+    //     $id=$id;
+    //     $nombre=$matricula->alumno->documento."_carnet.pdf";
+    //     $rutapdf='carnet/'.$nombre;
+    //     $pdf = Pdf::loadView('pdfs.carnet', compact('matricula','id'))->download()->getOriginalContent();
+    //     Storage::put($rutapdf, $pdf);
+    // }
 
     public function cobrapdf($id,$accion){
 

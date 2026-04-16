@@ -29,9 +29,10 @@ class BienvenidaMailable extends Mailable implements ShouldQueue
         $this->matricula=Matricula::find($id);
         $this->nombre=$this->matricula->alumno->documento."_carnet.pdf";
         $rutapdf='carnet/'.$this->nombre;
-        $this->ruta=Storage::url($rutapdf);
+        $this->ruta = storage_path('app/' . $rutapdf);
         $fecha= new Carbon($this->matricula->fecha_inicia);
         $duracion=$this->matricula->curso->duracion_meses+1;
+        dd($this->$duracion);
         $this->vence=$fecha->addMonths($duracion);
 
     }
@@ -66,6 +67,11 @@ class BienvenidaMailable extends Mailable implements ShouldQueue
      * @return array<int, \Illuminate\Mail\Mailables\Attachment>
      */
     public function attachments(): array    {
+
+      dd([
+        'ruta' => $this->ruta,
+        'existe' => file_exists($this->ruta)
+    ]);
 
         return [
             Attachment::fromPath($this->ruta),

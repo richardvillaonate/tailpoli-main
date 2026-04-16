@@ -112,6 +112,10 @@ class RecibosPagoCrear extends Component
     public $gestion=0;
     public $descuconcepto;
 
+    public $prontoPago = false;
+public $valorProntoPago = 0;
+    
+
     public function mount($ruta=null, $elegido=null, $estudiante=null, $fechatransaccion=null, $matricula=null){
 
         $this->limpiapoyo();
@@ -122,7 +126,9 @@ class RecibosPagoCrear extends Component
         if($fechatransaccion){
             $this->hoy=$fechatransaccion;
         } else{
-            $this->hoy = Carbon::today()->format('Y-m-d');
+            $this->hoy = $fechatransaccion 
+            ? Carbon::parse($fechatransaccion)->format('Y-m-d') 
+            : Carbon::today()->format('Y-m-d');
         }
 
         if($elegido){
@@ -408,7 +414,9 @@ class RecibosPagoCrear extends Component
                     'diferencia'
                 );
 
-        $fecha=Carbon::create($fecha)->format('Y-m-d');
+        $fecha = $fecha 
+        ? Carbon::parse($fecha)->format('Y-m-d') 
+        : Carbon::today()->format('Y-m-d');
 
         if($descuento && $descuento>0){
             $this->descuento=0;
@@ -430,7 +438,9 @@ class RecibosPagoCrear extends Component
                 }else{
                     $hoy=Carbon::today();
                 } */
-                if($fecha>=$this->hoy && floatval($this->valor)===floatval($aplicaa)){
+               $esTransferencia = str_contains($this->medio, 'transferencia');
+
+                if(($fecha >= $this->hoy || $esTransferencia) && floatval($this->valor) === floatval($aplicaa)){
                     //dd(" HOY Es ANTES: ",$hoy,$fecha);
                     //Log::info('Saldo y valor iguales');
                     $this->obtienedescuento();
@@ -546,7 +556,26 @@ class RecibosPagoCrear extends Component
         //vARIABLES:
         //Log::info('HOY: '.$this->hoy.' VEnce: '.$fechavence.' vALOR MINIMO PARA DESCUENTO: '.$this->minimodescuento.' Pagado:'.$this->pagado.' Saldo Siguiente: '.$saldosiguiente.' Saldo: '.$item['saldo'].' Valor inicial de pago: '.$item['valor']);
 
-        if($this->hoy<=$fechavence && $this->descuconcepto){
+
+
+        $esTransferencia = str_contains($this->medio, 'transferencia');
+        // 🔥 PRONTO PAGO MANUAL
+            if($this->prontoPago && $this->valorProntoPago > 0){
+
+                $this->descuento = $this->valorProntoPago;
+
+                // evitar que el descuento sea mayor que el valor
+                if($this->descuento > $this->valor){
+                    $this->descuento = $this->valor;
+                }
+
+                // sumarlo al valor (porque tu sistema trabaja así)
+                $this->valor = $this->valor + $this->descuento;
+
+            }
+            else{
+
+        if(($this->hoy <= $fechavence || $esTransferencia) && $this->descuconcepto){
 
             if(floatval($this->minimodescuento)===floatval($this->pagado)){
 
@@ -575,7 +604,7 @@ class RecibosPagoCrear extends Component
         }else{
             $this->calcudescu($id,$item['saldo'],$item['valor'],$item['descuento'],$item['fecha_pago']);
         }
-
+    }
         //Validar si el descuento es mayor que el precio
         if($this->valor<=$this->descuento){
             $this->descuento=0;
@@ -886,6 +915,7 @@ class RecibosPagoCrear extends Component
             $this->reset('totalCartera');
         }
     }
+
     // Crear REcibo de Pago
     public function new(){
 
@@ -915,10 +945,15 @@ class RecibosPagoCrear extends Component
 
 
         if($this->transaccion){
-            $this->banco=$this->transaccion->banco;
-            $this->fecha_transaccion=$this->transaccion->fecha_transaccion;
+            $this->banco = $this->transaccion->banco;
+            $this->fecha_transaccion = $this->transaccion->fecha_transaccion;
+
+            //  usar fecha de transacción como referencia de descuentos
+            $this->hoy = Carbon::parse($this->fecha_transaccion)->format('Y-m-d');
+
         }else{
-            $this->fecha_transaccion=now();
+            $this->fecha_transaccion = now();
+            $this->hoy = Carbon::today()->format('Y-m-d');
         }
 
         //Crear registro
@@ -1216,13 +1251,13 @@ class RecibosPagoCrear extends Component
         $ruta='/impresiones/imprecibo?rut='.$this->ruta.'&r='.$recibo->id;
 
         
-                dd([
-            'recibo' => $recibo,
-            'cargados' => $this->cargados,
-            'detalle_insertado' => DB::table('concepto_pago_recibo_pago')
-                ->where('recibo_pago_id', $recibo->id)
-                ->get(),
-        ]);
+        //         dd([
+        //     'recibo' => $recibo,
+        //     'cargados' => $this->cargados,
+        //     'detalle_insertado' => DB::table('concepto_pago_recibo_pago')
+        //         ->where('recibo_pago_id', $recibo->id)
+        //         ->get(),
+        // ]);
 
         $this->redirect($ruta);
     }
@@ -1286,6 +1321,19 @@ class RecibosPagoCrear extends Component
         return Descuento::where('status', 1)
                             ->get();
     }
+
+    public function updatedFechaTransaccion()
+{
+    if($this->fecha_transaccion){
+        $this->hoy = Carbon::parse($this->fecha_transaccion)->format('Y-m-d');
+
+        if($this->matricula_id){
+            $this->matrielegida($this->matricula_id);
+        }else{
+            $this->obligaciones();
+        }
+    }
+}
 
     public function render(){
         return view('livewire.financiera.recibo-pago.recibos-pago-crear',[

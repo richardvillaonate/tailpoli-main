@@ -364,68 +364,53 @@ return $consulta->paginate($this->pages);
         ->first()?->configPago?->descripcion;
 }
 
-                public function cuotasPendientes($matriculaId) {
+public function cuotasPendientes($matriculaId)
+{
     $hoy = now();
 
-    // 🔴 Cuotas vencidas (las verdaderas pendientes)
-    $vencidas = \App\Models\Financiera\Cartera::where('matricula_id', $matriculaId)
+    // 🔵 Traer todas las cuotas pendientes (UNA sola consulta)
+    $cuotas = \App\Models\Financiera\Cartera::where('matricula_id', $matriculaId)
         ->where('estado_cartera_id', '<', 5)
-        ->whereDate('fecha_pago', '<', $hoy)
-        ->orderBy('fecha_pago')
+        ->orderBy('fecha_pago', 'asc')
         ->get();
+
+    // 🔴 Cuotas vencidas
+    $vencidas = $cuotas->filter(function ($cuota) use ($hoy) {
+        return $cuota->fecha_pago < $hoy;
+    });
 
     $cantidad = $vencidas->count();
     $primeraVencida = $vencidas->first();
 
-    // dump($vencidas); // 🔥 DEBUG: Ver las cuotas vencidas
-    $valorPrimera = $primeraVencida ? $primeraVencida->valor : null;
+    // 🟢 Próxima cuota (si está al día)
+    $proxima = $cuotas->first(function ($cuota) use ($hoy) {
+        return $cuota->fecha_pago >= $hoy;
+    });
 
-    $dias = 0;
+    // 🔥 Lógica principal
+    $cuotaPrioritaria = $primeraVencida ?: $proxima;
 
-    if ($primeraVencida) {
-        $dias = $hoy->diffInDays($primeraVencida->fecha_pago);
-    }
-
-    // 🟢 Próxima cuota (aunque esté al día)
-    $proxima = \App\Models\Financiera\Cartera::where('matricula_id', $matriculaId)
-        ->where('estado_cartera_id', '<', 5)
-        ->whereDate('fecha_pago', '>=', $hoy)
-        ->orderBy('fecha_pago')
-        ->first();
+    // 🔢 Días de mora
+    $dias = $primeraVencida
+        ? $hoy->diffInDays($primeraVencida->fecha_pago)
+        : 0;
+    
+     $totalVencido = $vencidas->sum('valor');
 
     return [
+        // 🔵 DATOS EXISTENTES (NO ROMPE NADA)
         'cantidad_vencidas' => $cantidad,
         'fecha_vencida' => $primeraVencida->fecha_pago ?? null,
         'dias_mora' => $dias,
         'proximo_pago' => $proxima->fecha_pago ?? null,
-        'valor_primera_vencida' => $valorPrimera
+        'valor_primera_vencida' => $totalVencido ?? null,
+
+        // 🟡 NUEVO (SIEMPRE DEFINIDO)
+        'fecha_prioritaria' => $cuotaPrioritaria->fecha_pago ?? null,
+        'valor_cuota_prioritaria' => $cuotaPrioritaria->valor ?? null,
     ];
 }
 
-    public function cuotasPendientem($matriculaId) {
-    $hoy = now();
-
-    $cuotas = \App\Models\Financiera\Cartera::where('matricula_id', $matriculaId)
-        ->where('estado_cartera_id', '<', 5) // pendientes
-        ->orderBy('fecha_pago')
-        ->get();
-
-    $cantidad = $cuotas->count();
-
-    $primera = $cuotas->first();
-
-    $dias = 0;
-
-    if ($primera && $primera->fecha_pago < $hoy) {
-        $dias = $hoy->diffInDays($primera->fecha_pago);
-    }
-
-    return [
-        'cantidad' => $cantidad,
-        'fecha' => $primera->fecha_pago ?? null,
-        'dias' => $dias
-    ];
-}
 
     public function render()
     {

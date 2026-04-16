@@ -185,4 +185,6 @@ class Matricula extends Model
     return $this->hasMany(\App\Models\Financiera\Cartera::class, 'matricula_id');
 }
 
+
+
 }

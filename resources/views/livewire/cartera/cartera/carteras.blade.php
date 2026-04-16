@@ -130,10 +130,25 @@
                                 {{ $cuotas['cantidad_vencidas'] }}
                             </td>
 
-                            <!-- FECHA -->
                             <th class="text-center">
-                               {{ $cuotas['fecha_vencida'] ?? $cuotas['proximo_pago'] ?? '-' }} -- {{ $cuotas['valor_primera_vencida'] ? '$ ' . number_format($cuotas['valor_primera_vencida'], 0, ',', '.') : '-' }}
-                            </td>
+                                @if(($cuotas['cantidad_vencidas'] ?? 0) > 0)
+                                    {{-- 🔴 Tiene deuda --}}
+                                    {{ $cuotas['fecha_vencida'] ?? '-' }}
+                                    --
+                                    {{ !empty($cuotas['valor_primera_vencida']) 
+                                        ? '$ ' . number_format($cuotas['valor_primera_vencida'], 0, ',', '.') 
+                                        : '-' 
+                                    }}
+                                @else
+                                    {{-- 🟢 Está al día --}}
+                                    {{ $cuotas['proximo_pago'] ?? '-' }}
+                                    --
+                                    {{ !empty($cuotas['valor_cuota_prioritaria']) 
+                                        ? '$ ' . number_format($cuotas['valor_cuota_prioritaria'], 0, ',', '.') 
+                                        : '-' 
+                                    }}
+                                @endif
+                            </th>
 
                             <!-- MORA -->
                             <th class="text-center">

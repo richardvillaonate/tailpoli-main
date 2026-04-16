@@ -8,6 +8,7 @@ use App\Traits\MailTrait;
 use App\Traits\PdfTrait;
 use Carbon\Carbon;
 use Livewire\Component;
+use Illuminate\Support\Str;
 
 
 
@@ -178,8 +179,8 @@ class Documentos extends Component
         // 1. Generar carnet
         $carnetGenerado = $this->carnet($this->matricula->id);
 
-        if (!$carnetGenerado) {
-            $this->dispatch('alerta', name: 'Error al generar el carnet');
+        if ($carnetGenerado !== true) {
+            $this->dispatch('alerta', name: 'Error generando carnet. Código: '.$carnetGenerado);
             return;
         }
 
@@ -196,14 +197,16 @@ class Documentos extends Component
 
     } catch (\Exception $e) {
 
+
+        dd($e->getMessage(), $e->getFile(), $e->getLine());
         // Log para depuración
-        \Log::error('Error en carnetgen: ' . $e->getMessage());
+        // \Log::error('Error en carnetgen: ' . $e->getMessage());
 
         $this->dispatch('alerta', name: 'Ocurrió un error inesperado al generar o enviar el carnet');
     }
 }
 
-    public function carnetgen_old(){
+    public function carnetgen2(){
         //Genera carnet
         $this->carnet($this->matricula->id);
 

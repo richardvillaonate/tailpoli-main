@@ -370,6 +370,22 @@
                                                 <label class="peer-focus:font-medium absolute text-xs md:text-sm text-gray-500 duration-300 transform -translate-y-6 scale-75 top-3 -z-10 origin-[0] peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">
                                                     Valor a pagar
                                                 </label>
+                                                <div class="mt-3">
+                                                <label class="flex items-center gap-2 text-sm text-gray-700">
+                                                    <input type="checkbox" wire:model.live="prontoPago">
+                                                    Aplicar pronto pago por transferencia
+                                                </label>
+                                                @if ($prontoPago)
+                                                    <div class="mt-2">
+                                                        <input 
+                                                            type="number"
+                                                            wire:model.live="valorProntoPago"
+                                                            placeholder="Valor del descuento"
+                                                            class="w-full border rounded p-2"
+                                                        >
+                                                    </div>
+                                                @endif
+                                            </div>
                                             </div>
                                             {{-- @can('fi_cierrecajaAprobar')
                                                 <div class="relative z-0 w-full mb-5 group">
@@ -511,6 +527,7 @@
                                         </label>
                                     @endif
                                 </div>
+
                             @else
                                 <div class="mb-6">
                                     <label for="medio" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Método de pago</label>
@@ -545,7 +562,7 @@
                                 </div>
                             @endif
                         @endif
-
+                                                     
 
                     </div>
                     @if ($Total>0 || $pagoTotal)

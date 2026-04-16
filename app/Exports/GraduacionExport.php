@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\Academico\Control;
 use App\Models\Configuracion\Estado;
+use App\Models\Academico\Matricula;
 use Illuminate\Contracts\Support\Responsable;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
@@ -78,6 +79,7 @@ class GraduacionExport implements FromCollection, WithCustomStartCell, Responsab
        ->with([
             'estudiante.perfil',
             'matricula.carteras', 
+            'matricula.configPago',
             'ciclo'
         ])
         ->buscar($this->buscamin)
@@ -108,6 +110,7 @@ class GraduacionExport implements FromCollection, WithCustomStartCell, Responsab
                 'correo electrónico',
                 'celular',
                 'Matricula',
+                'Metodo de Pago', 
                 'Fecha Matricula',
                 'Fecha Inicio',
                 'Fecha Finaliza',
@@ -128,7 +131,99 @@ class GraduacionExport implements FromCollection, WithCustomStartCell, Responsab
             ];
         }
 
-        public function map($graduacion): array
+    private function metodoPago($matriculaId)
+{
+    if (!$matriculaId) return null;
+
+    return Matricula::with('configPago')
+        ->where('id', $matriculaId)
+        ->first()?->configPago?->descripcion;
+}
+
+    public function map($graduacion): array
+{
+    $id = $graduacion->status_est - 1;
+
+    $celular = 0;
+    if ($graduacion->estudiante->perfil) {
+        $celular = $graduacion->estudiante->perfil->celular;
+    }
+
+    // 🔥 MÉTODO DE PAGO (usando tu función)
+    $metodoPago = $this->metodoPago($graduacion->matricula->id ?? null) ?? 'N/A';
+
+    $hoy = now();
+
+    $carteras = collect();
+
+    // ✅ Validar existencia de matrícula y carteras
+    if ($graduacion->matricula && $graduacion->matricula->carteras) {
+        $carteras = $graduacion->matricula->carteras
+            ->where('estado_cartera_id', '<', 5) // pendientes
+            ->sortBy('fecha_pago')
+            ->values();
+    }
+
+    // ✅ 1. PRÓXIMA CUOTA PENDIENTE (la primera real)
+    $proxima = $carteras->first();
+    $proximaFecha = optional($proxima)->fecha_pago;
+
+    // ✅ 2. TODAS LAS CUOTAS PENDIENTES CONCATENADAS
+    $cuotasPendientes = $carteras
+        ->pluck('fecha_pago')
+        ->map(function ($fecha) {
+            return \Carbon\Carbon::parse($fecha)->format('Y-m-d');
+        })
+        ->implode(' | ');
+
+    // ✅ 3. CANTIDAD DE CUOTAS PENDIENTES
+    $cantidadCuotasPendientes = $carteras->count();
+
+    // ✅ 4. ÚLTIMO PAGO + CONCEPTO
+    $ultimoPago = null;
+    $conceptoUltimoPago = null;
+
+    if ($graduacion->matricula && $graduacion->matricula->carteras) {
+        $ultimo = $graduacion->matricula->carteras
+            ->where('estado_cartera_id', '>=', 5) // pagadas
+            ->sortByDesc('updated_at')
+            ->first();
+
+        if ($ultimo) {
+            $ultimoPago = $ultimo->fecha_pago;
+            $conceptoUltimoPago = $ultimo->concepto ?? 'N/A';
+        }
+    }
+
+    return [
+        $graduacion->estudiante->name,
+        $graduacion->estudiante->documento,
+        $graduacion->estudiante->email,
+        $celular,
+        $graduacion->matricula->id,
+        $metodoPago, // 🔥 NUEVA COLUMNA
+        $graduacion->matricula->created_at,
+        $graduacion->inicia,
+        $graduacion->ciclo->finaliza,
+        $graduacion->fecha_grado,
+        $graduacion->ciclo->name,
+        $ultimoPago,
+        $conceptoUltimoPago,
+        $proximaFecha,
+        $graduacion->ultima_asistencia,
+        $graduacion->dias_pasados,
+        $cuotasPendientes,
+        $cantidadCuotasPendientes,
+        $graduacion->mora,
+        $graduacion->overol,
+        $graduacion->diploma,
+        $graduacion->ceremonia,
+        $this->estadoestudiante[$id],
+    ];
+}
+
+
+        public function old_map($graduacion): array
 {
     $id = $graduacion->status_est - 1;
 
@@ -186,6 +281,7 @@ class GraduacionExport implements FromCollection, WithCustomStartCell, Responsab
         $graduacion->estudiante->email,
         $celular,
         $graduacion->matricula->id,
+        $graduacion->matricula->metodoPago,
         $graduacion->matricula->created_at,
         $graduacion->inicia,
         $graduacion->ciclo->finaliza,
@@ -262,17 +358,17 @@ class GraduacionExport implements FromCollection, WithCustomStartCell, Responsab
     }
 
         public function columnFormats(): array
-        {
-            return [
-                'F' => 'dd/mm/yyyy',
-                'G' => 'dd/mm/yyyy',
-                'H' => 'dd/mm/yyyy',
-                'I' => 'dd/mm/yyyy',
-                'K' => 'dd/mm/yyyy', // último pago
-                'M' => 'dd/mm/yyyy', // próxima fecha
-                'N' => 'dd/mm/yyyy', // última asistencia
-            ];
-        }
+    {
+        return [
+            'G' => 'dd/mm/yyyy', // Fecha Matrícula
+            'H' => 'dd/mm/yyyy', // Fecha Inicio
+            'I' => 'dd/mm/yyyy', // Fecha Finaliza
+            'J' => 'dd/mm/yyyy', // Fecha Grado
+            'L' => 'dd/mm/yyyy', // Último Pago
+            'N' => 'dd/mm/yyyy', // Próximo Pago
+            'O' => 'dd/mm/yyyy', // Última Asistencia
+        ];
+    }
 
     public function drawings()
     {
